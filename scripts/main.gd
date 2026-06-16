@@ -48,7 +48,15 @@ class Combatant:
 
 
 const INITIAL_WINDOW_SIZE := Vector2i(960, 300)
-const LOG_MIN_HEIGHT := 104
+const EXPANDED_WINDOW_SIZE := Vector2i(960, 520)
+const CONTENT_WIDTH := 944.0
+const WINDOW_MARGIN := 8.0
+const BATTLEFIELD_HEIGHT := 90.0
+const BACKGROUND_TEST_GAP_HEIGHT := 40.0
+const LOG_COLLAPSED_HEIGHT := 92.0
+const LOG_EXPANDED_HEIGHT := 300.0
+const COMBATANT_CARD_WIDTH := 88.0
+const COMBATANT_CARD_HEIGHT := 72.0
 const MAX_LOG_LINES := 80
 
 var party: Array[Combatant] = []
@@ -58,13 +66,25 @@ var combat_started: bool = false
 
 # UI references.
 # These are stored as variables because update_ui() rebuilds parts of the interface every frame.
+var content_layer: Control
 var root_box: VBoxContainer
+var top_panel: PanelContainer
 var top_bar: HBoxContainer
+var battlefield_panel: PanelContainer
+var background_test_gap: Control
 var battlefield: HBoxContainer
 var party_box: HBoxContainer
 var enemy_box: HBoxContainer
+var log_panel: PanelContainer
 var log_label: RichTextLabel
 var status_label: Label
+var log_toggle_button: Button
+
+# Borderless windows do not have a native title bar, so we implement simple drag behavior.
+var is_log_expanded := false
+var is_dragging_window := false
+var drag_mouse_start := Vector2i.ZERO
+var drag_window_start := Vector2i.ZERO
 
 # The log keeps more lines than the visible area.
 # RichTextLabel will provide the scrollbar.
@@ -74,7 +94,26 @@ var combat_log: Array[String] = []
 func _ready() -> void:
 	setup_window()
 	build_ui()
+
+	# Recalculate the content bounds when the game window is resized.
+	# This also updates the mouse passthrough region.
+	get_viewport().size_changed.connect(update_layout_bounds)
+
 	start_new_run()
+	update_layout_bounds()
+
+
+func _input(event: InputEvent) -> void:
+	# Allows the custom top bar to move the borderless window.
+	if not is_dragging_window:
+		return
+
+	if event is InputEventMouseMotion:
+		var mouse_delta := DisplayServer.mouse_get_position() - drag_mouse_start
+		DisplayServer.window_set_position(drag_window_start + mouse_delta)
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		is_dragging_window = false
 
 
 func _process(delta: float) -> void:
@@ -114,43 +153,45 @@ func _process(delta: float) -> void:
 
 
 func setup_window() -> void:
-	# Start as a normal resizable window so development is comfortable.
-	# Later we can expose borderless / always-on-top / compact mode as in-game settings.
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(INITIAL_WINDOW_SIZE)
 	DisplayServer.window_set_title("Ash Company - Combat MVP")
+
+	# Desktop-game behavior:
+	# - always on top keeps the game visible above normal windows;
+	# - borderless hides the native Windows title bar/toolbar;
+	# - transparent lets the desktop show through empty pixels.
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, true)
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_TRANSPARENT, true)
 
 	# Transparent windows need both the window flag and a transparent viewport background.
-	# The visible dark panels below are semi-transparent; the empty space around them should show the desktop.
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_TRANSPARENT, true)
 	get_tree().root.transparent_bg = true
 
 
 func build_ui() -> void:
-	# MarginContainer gives us padding without drawing an opaque background.
-	# This is important because a full-screen PanelContainer would cover the transparent window.
-	var screen_margin := MarginContainer.new()
-	screen_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	screen_margin.add_theme_constant_override("margin_left", 8)
-	screen_margin.add_theme_constant_override("margin_top", 8)
-	screen_margin.add_theme_constant_override("margin_right", 8)
-	screen_margin.add_theme_constant_override("margin_bottom", 8)
-	add_child(screen_margin)
+	# This full-screen layer does not draw anything by itself.
+	# We keep the real game UI inside root_box so transparent areas can be passed through to the desktop.
+	content_layer = Control.new()
+	content_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(content_layer)
 
 	root_box = VBoxContainer.new()
 	root_box.add_theme_constant_override("separation", 8)
-	screen_margin.add_child(root_box)
+	root_box.custom_minimum_size = Vector2(CONTENT_WIDTH, 0)
+	content_layer.add_child(root_box)
 
 	build_top_bar()
 	build_battlefield()
+	build_background_test_gap()
 	build_log()
 
 
 func build_top_bar() -> void:
-	var top_panel := PanelContainer.new()
+	top_panel = PanelContainer.new()
 	top_panel.add_theme_stylebox_override("panel", make_panel_style(0.78))
+	top_panel.gui_input.connect(on_top_panel_gui_input)
 	root_box.add_child(top_panel)
 
 	top_bar = HBoxContainer.new()
@@ -166,29 +207,47 @@ func build_top_bar() -> void:
 	status_label.text = ""
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Keep the status text from pushing the Restart / Close buttons out of the window.
+	status_label.clip_text = true
 	top_bar.add_child(status_label)
+
+	log_toggle_button = Button.new()
+	log_toggle_button.text = "Log +"
+	log_toggle_button.tooltip_text = "Expand or collapse the combat log"
+	log_toggle_button.pressed.connect(toggle_log_size)
+	top_bar.add_child(log_toggle_button)
 
 	var restart_button := Button.new()
 	restart_button.text = "Restart"
 	restart_button.pressed.connect(start_new_run)
 	top_bar.add_child(restart_button)
 
+	var close_button := Button.new()
+	close_button.text = "X"
+	close_button.tooltip_text = "Close Ash Company"
+	close_button.pressed.connect(get_tree().quit)
+	top_bar.add_child(close_button)
+
 
 func build_battlefield() -> void:
-	var battlefield_panel := PanelContainer.new()
+	battlefield_panel = PanelContainer.new()
 	battlefield_panel.add_theme_stylebox_override("panel", make_panel_style(0.72))
-	battlefield_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	# The fight/stage area should stay compact.
+	# When the window grows, the log expands instead of stretching the battlefield.
+	battlefield_panel.custom_minimum_size = Vector2(0, BATTLEFIELD_HEIGHT)
+	battlefield_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	root_box.add_child(battlefield_panel)
 
 	battlefield = HBoxContainer.new()
 	battlefield.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	battlefield.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	battlefield.add_theme_constant_override("separation", 16)
+	battlefield.add_theme_constant_override("separation", 10)
 	battlefield_panel.add_child(battlefield)
 
 	party_box = HBoxContainer.new()
 	party_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	party_box.add_theme_constant_override("separation", 8)
+	party_box.add_theme_constant_override("separation", 6)
 	battlefield.add_child(party_box)
 
 	var divider := VSeparator.new()
@@ -196,14 +255,26 @@ func build_battlefield() -> void:
 
 	enemy_box = HBoxContainer.new()
 	enemy_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enemy_box.add_theme_constant_override("separation", 8)
+	enemy_box.add_theme_constant_override("separation", 6)
 	battlefield.add_child(enemy_box)
 
 
+func build_background_test_gap() -> void:
+	# Temporary transparent gap between the combat stage and the log.
+	# Most of this gap is outside the mouse passthrough polygon, so it is useful
+	# for testing whether clicks reach the window behind Ash Company.
+	background_test_gap = Control.new()
+	background_test_gap.custom_minimum_size = Vector2(0, BACKGROUND_TEST_GAP_HEIGHT)
+	background_test_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_box.add_child(background_test_gap)
+
+
 func build_log() -> void:
-	var log_panel := PanelContainer.new()
+	log_panel = PanelContainer.new()
 	log_panel.add_theme_stylebox_override("panel", make_panel_style(0.82))
-	log_panel.custom_minimum_size = Vector2(0, LOG_MIN_HEIGHT)
+	log_panel.custom_minimum_size = Vector2(0, LOG_COLLAPSED_HEIGHT)
+
+	# The log is the only area that expands vertically for now.
 	log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root_box.add_child(log_panel)
 
@@ -218,6 +289,79 @@ func build_log() -> void:
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_panel.add_child(log_label)
+
+
+func toggle_log_size() -> void:
+	# Borderless windows do not have native resize handles.
+	# This gives us a controlled way to test a larger combat log while keeping the compact mode.
+	is_log_expanded = not is_log_expanded
+
+	var next_size := EXPANDED_WINDOW_SIZE if is_log_expanded else INITIAL_WINDOW_SIZE
+	var next_log_height := LOG_EXPANDED_HEIGHT if is_log_expanded else LOG_COLLAPSED_HEIGHT
+
+	DisplayServer.window_set_size(next_size)
+	log_panel.custom_minimum_size = Vector2(0, next_log_height)
+	log_toggle_button.text = "Log -" if is_log_expanded else "Log +"
+
+	call_deferred("update_layout_bounds")
+
+
+func on_top_panel_gui_input(event: InputEvent) -> void:
+	# Borderless windows have no native drag area.
+	# This makes the custom top panel behave like a small title bar.
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		is_dragging_window = event.pressed
+		if is_dragging_window:
+			drag_mouse_start = DisplayServer.mouse_get_position()
+			drag_window_start = DisplayServer.window_get_position()
+
+
+func update_layout_bounds() -> void:
+	if root_box == null:
+		return
+
+	var viewport_size := get_viewport_rect().size
+	var content_width := minf(CONTENT_WIDTH, maxf(320.0, viewport_size.x - WINDOW_MARGIN * 2.0))
+	var content_height := maxf(220.0, viewport_size.y - WINDOW_MARGIN * 2.0)
+
+	root_box.position = Vector2(WINDOW_MARGIN, WINDOW_MARGIN)
+	root_box.size = Vector2(content_width, content_height)
+
+	# The passthrough polygon depends on the final Control sizes, so update it after layout.
+	call_deferred("update_mouse_passthrough_polygon")
+
+
+func update_mouse_passthrough_polygon() -> void:
+	if top_panel == null or battlefield_panel == null or log_panel == null:
+		return
+
+	# Godot can pass mouse events outside this polygon to the windows behind it.
+	# Instead of using one big rectangle, we trace the top bar, the combat panel,
+	# and the log panel with a tiny left-side bridge between them.
+	# That leaves most of the transparent gap between combat and log clickable.
+	var top_rect := Rect2(top_panel.global_position, top_panel.size).grow(2.0)
+	var battle_rect := Rect2(battlefield_panel.global_position, battlefield_panel.size).grow(2.0)
+	var log_rect := Rect2(log_panel.global_position, log_panel.size).grow(2.0)
+
+	var x0 := minf(top_rect.position.x, minf(battle_rect.position.x, log_rect.position.x))
+	var x1 := maxf(top_rect.end.x, maxf(battle_rect.end.x, log_rect.end.x))
+	var bridge_x := x0 + 6.0
+
+	get_window().mouse_passthrough_polygon = PackedVector2Array([
+		Vector2(x0, top_rect.position.y),
+		Vector2(x1, top_rect.position.y),
+		Vector2(x1, top_rect.end.y),
+		Vector2(bridge_x, top_rect.end.y),
+		Vector2(bridge_x, battle_rect.position.y),
+		Vector2(x1, battle_rect.position.y),
+		Vector2(x1, battle_rect.end.y),
+		Vector2(bridge_x, battle_rect.end.y),
+		Vector2(bridge_x, log_rect.position.y),
+		Vector2(x1, log_rect.position.y),
+		Vector2(x1, log_rect.end.y),
+		Vector2(x0, log_rect.end.y),
+		Vector2(x0, top_rect.position.y),
+	])
 
 
 func make_panel_style(alpha: float) -> StyleBoxFlat:
@@ -348,7 +492,7 @@ func get_alive(combatants: Array[Combatant]) -> Array[Combatant]:
 
 
 func update_ui() -> void:
-	status_label.text = "Wave %s | Party: %s/4 | Enemies: %s" % [wave, get_alive(party).size(), get_alive(enemies).size()]
+	status_label.text = "W%s | P:%s/4 | E:%s" % [wave, get_alive(party).size(), get_alive(enemies).size()]
 	rebuild_combatant_cards(party_box, party)
 	rebuild_combatant_cards(enemy_box, enemies)
 	log_label.text = "\n".join(combat_log)
@@ -362,12 +506,12 @@ func rebuild_combatant_cards(container: HBoxContainer, combatants: Array[Combata
 
 	for combatant in combatants:
 		var card := PanelContainer.new()
-		card.custom_minimum_size = Vector2(105, 80)
+		card.custom_minimum_size = Vector2(COMBATANT_CARD_WIDTH, COMBATANT_CARD_HEIGHT)
 		card.add_theme_stylebox_override("panel", make_card_style(combatant))
 		container.add_child(card)
 
 		var box := VBoxContainer.new()
-		box.add_theme_constant_override("separation", 3)
+		box.add_theme_constant_override("separation", 2)
 		card.add_child(box)
 
 		var name_label := Label.new()
