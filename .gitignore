@@ -1,0 +1,10 @@
+# Godot 4
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Windows / editor
+Thumbs.db
+.DS_Store
+.vscode/
