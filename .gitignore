@@ -4,6 +4,12 @@
 export.cfg
 export_presets.cfg
 
+# Godot exports / local builds
+builds/
+*.exe
+*.console.exe
+*.pck
+
 # Windows / editor
 Thumbs.db
 .DS_Store
