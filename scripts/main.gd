@@ -1,10 +1,11 @@
 extends Control
 
 # This MVP still keeps combat and UI behavior in one file, but the main UI
-# layout now lives in scenes/main.tscn. That keeps this script focused on game
-# behavior instead of manually creating every panel, label, and button.
+# layout now lives in scenes/main.tscn and combatant cards live in their own
+# scene. That keeps this script focused on game behavior instead of manually
+# creating every panel, label, and button.
 # Later we will split this into smaller scripts, such as Combatant.gd,
-# CombatSystem.gd, CombatLog.gd, and CombatantCard.gd.
+# CombatSystem.gd, and CombatLog.gd.
 
 class Combatant:
 	# Display data.
@@ -50,6 +51,8 @@ class Combatant:
 		return "%s/%s" % [hp, max_hp]
 
 
+const COMBATANT_CARD_SCENE := preload("res://scenes/combatant_card.tscn")
+
 const INITIAL_WINDOW_SIZE := Vector2i(960, 300)
 const EXPANDED_WINDOW_SIZE := Vector2i(960, 520)
 const CONTENT_WIDTH := 944.0
@@ -58,8 +61,6 @@ const BATTLEFIELD_HEIGHT := 90.0
 const BACKGROUND_TEST_GAP_HEIGHT := 40.0
 const LOG_COLLAPSED_HEIGHT := 92.0
 const LOG_EXPANDED_HEIGHT := 300.0
-const COMBATANT_CARD_WIDTH := 88.0
-const COMBATANT_CARD_HEIGHT := 72.0
 const MAX_LOG_LINES := 80
 
 var party: Array[Combatant] = []
@@ -425,56 +426,22 @@ func update_ui() -> void:
 
 
 func rebuild_combatant_cards(container: HBoxContainer, combatants: Array[Combatant]) -> void:
-	# This is simple and readable, but not the most efficient approach.
-	# Later we can keep card nodes alive and only update their labels/bars.
+	# We still rebuild the cards every frame for simplicity, but each card layout
+	# now lives in its own scene. The next optimization will be to keep cards alive
+	# and only update their data when combat state changes.
 	for child in container.get_children():
 		child.queue_free()
 
 	for combatant in combatants:
-		var card := PanelContainer.new()
-		card.custom_minimum_size = Vector2(COMBATANT_CARD_WIDTH, COMBATANT_CARD_HEIGHT)
-		card.add_theme_stylebox_override("panel", make_card_style(combatant))
+		var card := COMBATANT_CARD_SCENE.instantiate()
 		container.add_child(card)
-
-		var box := VBoxContainer.new()
-		box.add_theme_constant_override("separation", 2)
-		card.add_child(box)
-
-		var name_label := Label.new()
-		name_label.text = combatant.display_name
-		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		box.add_child(name_label)
-
-		var role_label := Label.new()
-		role_label.text = combatant.role
-		role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		box.add_child(role_label)
-
-		var hp_bar := ProgressBar.new()
-		hp_bar.max_value = combatant.max_hp
-		hp_bar.value = combatant.hp
-		hp_bar.show_percentage = false
-		box.add_child(hp_bar)
-
-		var hp_label := Label.new()
-		hp_label.text = combatant.hp_text()
-		hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		box.add_child(hp_label)
-
-
-func make_card_style(combatant: Combatant) -> StyleBoxFlat:
-	# Dead units are darker so it is easier to read the battlefield quickly.
-	var alpha := 0.72 if combatant.is_alive() else 0.36
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.09, alpha)
-	style.border_color = Color(0.22, 0.22, 0.24, alpha)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(3)
-	style.content_margin_left = 6
-	style.content_margin_top = 5
-	style.content_margin_right = 6
-	style.content_margin_bottom = 5
-	return style
+		card.update_from_combatant(
+			combatant.display_name,
+			combatant.role,
+			combatant.hp,
+			combatant.max_hp,
+			combatant.is_alive()
+		)
 
 
 func push_log(message: String) -> void:

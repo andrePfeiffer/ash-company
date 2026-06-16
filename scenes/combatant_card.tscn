@@ -1,0 +1,36 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/combatant_card.gd" id="1_card_script"]
+
+[node name="CombatantCard" type="PanelContainer"]
+custom_minimum_size = Vector2(88, 72)
+script = ExtResource("1_card_script")
+
+[node name="CardBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="NameLabel" type="Label" parent="CardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Vanguard"
+horizontal_alignment = 1
+
+[node name="RoleLabel" type="Label" parent="CardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Tank"
+horizontal_alignment = 1
+
+[node name="HpBar" type="ProgressBar" parent="CardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 120.0
+value = 120.0
+show_percentage = false
+
+[node name="HpLabel" type="Label" parent="CardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "120/120"
+horizontal_alignment = 1
