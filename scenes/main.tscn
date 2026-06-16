@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://7eabvb6dgx0w"]
 
-[ext_resource type="Script" uid="uid://l8rgvnl0boy3" path="res://scripts/main.gd" id="1_main_script"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main_script"]
 
-[node name="Main" type="Control" unique_id=445556928]
+[node name="Main" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,3 +10,109 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main_script")
+
+[node name="ContentLayer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RootBox" type="VBoxContainer" parent="ContentLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 944.0
+offset_bottom = 284.0
+theme_override_constants/separation = 8
+
+[node name="TopPanel" type="PanelContainer" parent="ContentLayer/RootBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TopBar" type="HBoxContainer" parent="ContentLayer/RootBox/TopPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="ContentLayer/RootBox/TopPanel/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Ash Company"
+
+[node name="StatusLabel" type="Label" parent="ContentLayer/RootBox/TopPanel/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "W1 | P:4/4 | E:2"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="LogToggleButton" type="Button" parent="ContentLayer/RootBox/TopPanel/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Log +"
+tooltip_text = "Expand or collapse the combat log"
+
+[node name="RestartButton" type="Button" parent="ContentLayer/RootBox/TopPanel/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Restart"
+
+[node name="CloseButton" type="Button" parent="ContentLayer/RootBox/TopPanel/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "X"
+tooltip_text = "Close Ash Company"
+
+[node name="BattlefieldPanel" type="PanelContainer" parent="ContentLayer/RootBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Battlefield" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="PartyBox" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Divider" type="VSeparator" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EnemyBox" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="BackgroundTestGap" type="Control" parent="ContentLayer/RootBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="LogPanel" type="PanelContainer" parent="ContentLayer/RootBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 92)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LogLabel" type="RichTextLabel" parent="ContentLayer/RootBox/LogPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true

@@ -1,7 +1,10 @@
 extends Control
 
-# This MVP keeps everything in one file on purpose.
-# Later we will split this into smaller scripts, such as Combatant.gd, CombatSystem.gd, and CombatLog.gd.
+# This MVP still keeps combat and UI behavior in one file, but the main UI
+# layout now lives in scenes/main.tscn. That keeps this script focused on game
+# behavior instead of manually creating every panel, label, and button.
+# Later we will split this into smaller scripts, such as Combatant.gd,
+# CombatSystem.gd, CombatLog.gd, and CombatantCard.gd.
 
 class Combatant:
 	# Display data.
@@ -64,21 +67,21 @@ var enemies: Array[Combatant] = []
 var wave: int = 1
 var combat_started: bool = false
 
-# UI references.
-# These are stored as variables because update_ui() rebuilds parts of the interface every frame.
-var content_layer: Control
-var root_box: VBoxContainer
-var top_panel: PanelContainer
-var top_bar: HBoxContainer
-var battlefield_panel: PanelContainer
-var background_test_gap: Control
-var battlefield: HBoxContainer
-var party_box: HBoxContainer
-var enemy_box: HBoxContainer
-var log_panel: PanelContainer
-var log_label: RichTextLabel
-var status_label: Label
-var log_toggle_button: Button
+# UI references from scenes/main.tscn.
+# The % syntax works because those scene nodes are marked as unique names.
+@onready var content_layer: Control = %ContentLayer
+@onready var root_box: VBoxContainer = %RootBox
+@onready var top_panel: PanelContainer = %TopPanel
+@onready var battlefield_panel: PanelContainer = %BattlefieldPanel
+@onready var background_test_gap: Control = %BackgroundTestGap
+@onready var party_box: HBoxContainer = %PartyBox
+@onready var enemy_box: HBoxContainer = %EnemyBox
+@onready var log_panel: PanelContainer = %LogPanel
+@onready var log_label: RichTextLabel = %LogLabel
+@onready var status_label: Label = %StatusLabel
+@onready var log_toggle_button: Button = %LogToggleButton
+@onready var restart_button: Button = %RestartButton
+@onready var close_button: Button = %CloseButton
 
 # Borderless windows do not have a native title bar, so we implement simple drag behavior.
 var is_log_expanded := false
@@ -93,7 +96,8 @@ var combat_log: Array[String] = []
 
 func _ready() -> void:
 	setup_window()
-	build_ui()
+	configure_scene_ui()
+	connect_ui_signals()
 
 	# Recalculate the content bounds when the game window is resized.
 	# This also updates the mouse passthrough region.
@@ -169,126 +173,48 @@ func setup_window() -> void:
 	get_tree().root.transparent_bg = true
 
 
-func build_ui() -> void:
-	# This full-screen layer does not draw anything by itself.
-	# We keep the real game UI inside root_box so transparent areas can be passed through to the desktop.
-	content_layer = Control.new()
-	content_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+func configure_scene_ui() -> void:
+	# ContentLayer does not draw anything by itself. The real UI is inside RootBox,
+	# so transparent areas can be passed through to the desktop.
 	content_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(content_layer)
 
-	root_box = VBoxContainer.new()
-	root_box.add_theme_constant_override("separation", 8)
+	# Most layout values now live in the scene. These runtime values stay here
+	# because they are behavior/settings that the script updates while the game runs.
 	root_box.custom_minimum_size = Vector2(CONTENT_WIDTH, 0)
-	content_layer.add_child(root_box)
 
-	build_top_bar()
-	build_battlefield()
-	build_background_test_gap()
-	build_log()
-
-
-func build_top_bar() -> void:
-	top_panel = PanelContainer.new()
 	top_panel.add_theme_stylebox_override("panel", make_panel_style(0.78))
-	top_panel.gui_input.connect(on_top_panel_gui_input)
-	root_box.add_child(top_panel)
-
-	top_bar = HBoxContainer.new()
-	top_bar.add_theme_constant_override("separation", 10)
-	top_panel.add_child(top_bar)
-
-	var title := Label.new()
-	title.text = "Ash Company"
-	title.add_theme_font_size_override("font_size", 18)
-	top_bar.add_child(title)
-
-	status_label = Label.new()
-	status_label.text = ""
-	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Keep the status text from pushing the Restart / Close buttons out of the window.
-	status_label.clip_text = true
-	top_bar.add_child(status_label)
-
-	log_toggle_button = Button.new()
-	log_toggle_button.text = "Log +"
-	log_toggle_button.tooltip_text = "Expand or collapse the combat log"
-	log_toggle_button.pressed.connect(toggle_log_size)
-	top_bar.add_child(log_toggle_button)
-
-	var restart_button := Button.new()
-	restart_button.text = "Restart"
-	restart_button.pressed.connect(start_new_run)
-	top_bar.add_child(restart_button)
-
-	var close_button := Button.new()
-	close_button.text = "X"
-	close_button.tooltip_text = "Close Ash Company"
-	close_button.pressed.connect(get_tree().quit)
-	top_bar.add_child(close_button)
-
-
-func build_battlefield() -> void:
-	battlefield_panel = PanelContainer.new()
 	battlefield_panel.add_theme_stylebox_override("panel", make_panel_style(0.72))
+	log_panel.add_theme_stylebox_override("panel", make_panel_style(0.82))
 
-	# The fight/stage area should stay compact.
-	# When the window grows, the log expands instead of stretching the battlefield.
 	battlefield_panel.custom_minimum_size = Vector2(0, BATTLEFIELD_HEIGHT)
 	battlefield_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	root_box.add_child(battlefield_panel)
 
-	battlefield = HBoxContainer.new()
-	battlefield.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	battlefield.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	battlefield.add_theme_constant_override("separation", 10)
-	battlefield_panel.add_child(battlefield)
-
-	party_box = HBoxContainer.new()
-	party_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	party_box.add_theme_constant_override("separation", 6)
-	battlefield.add_child(party_box)
-
-	var divider := VSeparator.new()
-	battlefield.add_child(divider)
-
-	enemy_box = HBoxContainer.new()
-	enemy_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enemy_box.add_theme_constant_override("separation", 6)
-	battlefield.add_child(enemy_box)
-
-
-func build_background_test_gap() -> void:
-	# Temporary transparent gap between the combat stage and the log.
-	# Most of this gap is outside the mouse passthrough polygon, so it is useful
-	# for testing whether clicks reach the window behind Ash Company.
-	background_test_gap = Control.new()
 	background_test_gap.custom_minimum_size = Vector2(0, BACKGROUND_TEST_GAP_HEIGHT)
 	background_test_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root_box.add_child(background_test_gap)
 
-
-func build_log() -> void:
-	log_panel = PanelContainer.new()
-	log_panel.add_theme_stylebox_override("panel", make_panel_style(0.82))
 	log_panel.custom_minimum_size = Vector2(0, LOG_COLLAPSED_HEIGHT)
-
-	# The log is the only area that expands vertically for now.
 	log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root_box.add_child(log_panel)
 
-	log_label = RichTextLabel.new()
-	log_label.bbcode_enabled = true
-	log_label.fit_content = false
+	status_label.clip_text = true
 
 	# This is the important part for the combat log.
 	# scroll_active enables the scrollbar, and scroll_following keeps the newest line visible.
+	log_label.bbcode_enabled = true
+	log_label.fit_content = false
 	log_label.scroll_active = true
 	log_label.scroll_following = true
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	log_panel.add_child(log_label)
+
+
+func connect_ui_signals() -> void:
+	# The scene owns the buttons; the script owns their behavior.
+	top_panel.gui_input.connect(on_top_panel_gui_input)
+	log_toggle_button.pressed.connect(toggle_log_size)
+	restart_button.pressed.connect(start_new_run)
+	close_button.pressed.connect(func() -> void:
+		get_tree().quit()
+	)
 
 
 func toggle_log_size() -> void:
