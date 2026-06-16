@@ -1,56 +1,11 @@
 extends Control
 
-# This MVP still keeps combat and UI behavior in one file, but the main UI
-# layout now lives in scenes/main.tscn and combatant cards live in their own
-# scene. That keeps this script focused on game behavior instead of manually
-# creating every panel, label, and button.
-# Later we will split this into smaller scripts, such as Combatant.gd,
-# CombatSystem.gd, and CombatLog.gd.
+# Main.gd now focuses on window behavior and UI updates.
+# Combat rules and combatant data live in scripts/combat/.
+# Card layout lives in scenes/combatant_card.tscn.
+# Later we can split window behavior into its own script too.
 
-class Combatant:
-	# Display data.
-	var display_name: String
-	var role: String
-
-	# Combat stats.
-	var max_hp: int
-	var hp: int
-	var attack: int
-	var defense: int
-	var heal_power: int
-	var speed: float
-
-	# Runtime state.
-	var action_timer: float = 0.0
-	var is_enemy: bool = false
-
-	func _init(
-		_display_name: String,
-		_role: String,
-		_max_hp: int,
-		_attack: int,
-		_defense: int,
-		_heal_power: int,
-		_speed: float,
-		_is_enemy: bool = false
-	) -> void:
-		display_name = _display_name
-		role = _role
-		max_hp = _max_hp
-		hp = _max_hp
-		attack = _attack
-		defense = _defense
-		heal_power = _heal_power
-		speed = _speed
-		is_enemy = _is_enemy
-
-	func is_alive() -> bool:
-		return hp > 0
-
-	func hp_text() -> String:
-		return "%s/%s" % [hp, max_hp]
-
-
+const COMBAT_SYSTEM_SCRIPT := preload("res://scripts/combat/combat_system.gd")
 const COMBATANT_CARD_SCENE := preload("res://scenes/combatant_card.tscn")
 
 const INITIAL_WINDOW_SIZE := Vector2i(960, 300)
@@ -63,10 +18,8 @@ const LOG_COLLAPSED_HEIGHT := 92.0
 const LOG_EXPANDED_HEIGHT := 300.0
 const MAX_LOG_LINES := 80
 
-var party: Array[Combatant] = []
-var enemies: Array[Combatant] = []
-var wave: int = 1
-var combat_started: bool = false
+# Combat state is owned by CombatSystem.
+var combat_system: CombatSystem
 
 # UI references from scenes/main.tscn.
 # The % syntax works because those scene nodes are marked as unique names.
@@ -90,12 +43,10 @@ var is_dragging_window := false
 var drag_mouse_start := Vector2i.ZERO
 var drag_window_start := Vector2i.ZERO
 
-# The log keeps more lines than the visible area.
-# RichTextLabel will provide the scrollbar.
-var combat_log: Array[String] = []
-
 
 func _ready() -> void:
+	combat_system = COMBAT_SYSTEM_SCRIPT.new(MAX_LOG_LINES)
+
 	setup_window()
 	configure_scene_ui()
 	connect_ui_signals()
@@ -122,39 +73,13 @@ func _input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	if not combat_started:
+	if combat_system == null:
 		return
 
-	# Lose condition: every party member is dead.
-	if get_alive(party).is_empty():
-		combat_started = false
-		push_log("The Ash Company fell on wave %s." % wave)
+	# CombatSystem returns true only when something changed.
+	# That keeps Main.gd from rebuilding the UI more often than needed.
+	if combat_system.tick(delta):
 		update_ui()
-		return
-
-	# Wave clear: all enemies are dead, then the next wave starts immediately.
-	if get_alive(enemies).is_empty():
-		wave += 1
-		spawn_wave(wave)
-		push_log("Wave %s approaches." % wave)
-		update_ui()
-		return
-
-	# Party members act automatically when their action timer reaches their speed value.
-	for hero in get_alive(party):
-		hero.action_timer += delta
-		if hero.action_timer >= hero.speed:
-			hero.action_timer = 0.0
-			party_action(hero)
-
-	# Enemies use the same timer system as the party.
-	for enemy in get_alive(enemies):
-		enemy.action_timer += delta
-		if enemy.action_timer >= enemy.speed:
-			enemy.action_timer = 0.0
-			enemy_action(enemy)
-
-	update_ui()
 
 
 func setup_window() -> void:
@@ -306,127 +231,27 @@ func make_panel_style(alpha: float) -> StyleBoxFlat:
 
 
 func start_new_run() -> void:
-	wave = 1
-	combat_log.clear()
-
-	# Four fixed archetypes for the first MVP.
-	# Builds/items will make them flexible later, but the base roles stay readable.
-	party = [
-		Combatant.new("Vanguard", "Tank", 120, 9, 5, 0, 1.4),
-		Combatant.new("Striker", "DPS", 75, 17, 1, 0, 1.0),
-		Combatant.new("Mender", "Healer", 70, 7, 1, 15, 1.7),
-		Combatant.new("Arcanist", "Mage", 62, 20, 0, 0, 1.8),
-	]
-
-	spawn_wave(wave)
-	combat_started = true
-	push_log("The Ash Company enters the first ruin.")
+	combat_system.start_new_run()
 	update_ui()
 
 
-func spawn_wave(current_wave: int) -> void:
-	# Enemy count slowly increases, but is capped so the UI stays readable.
-	var enemy_count := mini(2 + int(current_wave / 2), 5)
-	enemies.clear()
-
-	for index in enemy_count:
-		var hp := 28 + current_wave * 8 + index * 3
-		var atk := 5 + current_wave * 2
-		var def := int(current_wave / 3)
-		var speed := maxf(0.8, 1.8 - current_wave * 0.03)
-		enemies.append(Combatant.new("Ashling %s" % (index + 1), "Enemy", hp, atk, def, 0, speed, true))
-
-
-func party_action(hero: Combatant) -> void:
-	# Mender tries to heal before attacking.
-	# The 72% threshold is arbitrary for now; later this can become a build/stat setting.
-	if hero.display_name == "Mender":
-		var wounded := get_most_wounded_ally()
-		if wounded != null and wounded.hp < wounded.max_hp * 0.72:
-			var amount := hero.heal_power + randi_range(0, 4)
-			wounded.hp = mini(wounded.max_hp, wounded.hp + amount)
-			push_log("Mender heals %s for %s." % [wounded.display_name, amount])
-			return
-
-	# Everyone else attacks the first living enemy.
-	# Later we can add targeting rules such as lowest HP, highest threat, marked target, etc.
-	var target := get_first_alive(enemies)
-	if target == null:
-		return
-
-	var damage := calculate_damage(hero.attack, target.defense)
-	target.hp = maxi(0, target.hp - damage)
-	push_log("%s hits %s for %s." % [hero.display_name, target.display_name, damage])
-
-	if not target.is_alive():
-		push_log("%s is defeated." % target.display_name)
-
-
-func enemy_action(enemy: Combatant) -> void:
-	var target := get_enemy_target()
-	if target == null:
-		return
-
-	var damage := calculate_damage(enemy.attack, target.defense)
-	target.hp = maxi(0, target.hp - damage)
-	push_log("%s strikes %s for %s." % [enemy.display_name, target.display_name, damage])
-
-	if not target.is_alive():
-		push_log("%s has fallen." % target.display_name)
-
-
-func calculate_damage(raw_attack: int, target_defense: int) -> int:
-	# Small random variance keeps the log from feeling too mechanical.
-	var variance := randi_range(-2, 3)
-	return maxi(1, raw_attack + variance - target_defense)
-
-
-func get_enemy_target() -> Combatant:
-	# Enemies prefer the Vanguard while he is alive.
-	# This gives us the first version of a tank/aggro system.
-	for hero in party:
-		if hero.display_name == "Vanguard" and hero.is_alive():
-			return hero
-	return get_first_alive(party)
-
-
-func get_most_wounded_ally() -> Combatant:
-	var alive_party := get_alive(party)
-	if alive_party.is_empty():
-		return null
-
-	# Sort by HP percentage, not raw HP.
-	# Example: 30/60 is more wounded than 50/120.
-	alive_party.sort_custom(func(a: Combatant, b: Combatant) -> bool:
-		return float(a.hp) / float(a.max_hp) < float(b.hp) / float(b.max_hp)
-	)
-	return alive_party[0]
-
-
-func get_first_alive(combatants: Array[Combatant]) -> Combatant:
-	for combatant in combatants:
-		if combatant.is_alive():
-			return combatant
-	return null
-
-
-func get_alive(combatants: Array[Combatant]) -> Array[Combatant]:
-	var alive: Array[Combatant] = []
-	for combatant in combatants:
-		if combatant.is_alive():
-			alive.append(combatant)
-	return alive
-
-
 func update_ui() -> void:
-	status_label.text = "W%s | P:%s/4 | E:%s" % [wave, get_alive(party).size(), get_alive(enemies).size()]
-	rebuild_combatant_cards(party_box, party)
-	rebuild_combatant_cards(enemy_box, enemies)
-	log_label.text = "\n".join(combat_log)
+	if combat_system == null:
+		return
+
+	status_label.text = "W%s | P:%s/4 | E:%s" % [
+		combat_system.wave,
+		combat_system.get_alive(combat_system.party).size(),
+		combat_system.get_alive(combat_system.enemies).size(),
+	]
+
+	rebuild_combatant_cards(party_box, combat_system.party)
+	rebuild_combatant_cards(enemy_box, combat_system.enemies)
+	log_label.text = "\n".join(combat_system.log_entries)
 
 
 func rebuild_combatant_cards(container: HBoxContainer, combatants: Array[Combatant]) -> void:
-	# We still rebuild the cards every frame for simplicity, but each card layout
+	# We still rebuild the cards every state update for simplicity, but each card layout
 	# now lives in its own scene. The next optimization will be to keep cards alive
 	# and only update their data when combat state changes.
 	for child in container.get_children():
@@ -442,11 +267,3 @@ func rebuild_combatant_cards(container: HBoxContainer, combatants: Array[Combata
 			combatant.max_hp,
 			combatant.is_alive()
 		)
-
-
-func push_log(message: String) -> void:
-	# New messages go to the bottom.
-	# This matches the scrollbar behavior: the log follows the newest line.
-	combat_log.push_back(message)
-	if combat_log.size() > MAX_LOG_LINES:
-		combat_log.pop_front()
