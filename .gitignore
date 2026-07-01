@@ -14,3 +14,10 @@ builds/
 Thumbs.db
 .DS_Store
 .vscode/
+
+# Local/private art references. Keep commercial or non-redistributable packs here.
+assets/art/local-only/
+
+# Aseprite temporary/backup files.
+*.aseprite~
+*.ase~
