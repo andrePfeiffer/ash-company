@@ -1,73 +1,358 @@
-[gd_resource type="SpriteFrames" load_steps=7 format=3]
+[gd_resource type="SpriteFrames" load_steps=40 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/stage_spritesheet.png" id="1_sheet"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/heroes/vanguard/idle.png" id="1_idle"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/heroes/vanguard/walk.png" id="2_walk"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/heroes/vanguard/attack.png" id="3_attack"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/heroes/vanguard/hurt.png" id="4_hurt"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_idle"]
-atlas = ExtResource("1_sheet")
-region = Rect2(0, 0, 32, 32)
+[sub_resource type="AtlasTexture" id="HeroIdle1"]
+atlas = ExtResource("1_idle")
+region = Rect2(0, 0, 64, 80)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_walk1"]
-atlas = ExtResource("1_sheet")
-region = Rect2(32, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_walk2"]
-atlas = ExtResource("1_sheet")
-region = Rect2(64, 0, 32, 32)
+[sub_resource type="AtlasTexture" id="HeroIdle2"]
+atlas = ExtResource("1_idle")
+region = Rect2(64, 0, 64, 80)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_attack"]
-atlas = ExtResource("1_sheet")
-region = Rect2(96, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_cast"]
-atlas = ExtResource("1_sheet")
-region = Rect2(128, 0, 32, 32)
+[sub_resource type="AtlasTexture" id="HeroIdle3"]
+atlas = ExtResource("1_idle")
+region = Rect2(128, 0, 64, 80)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_hurt"]
-atlas = ExtResource("1_sheet")
-region = Rect2(160, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="HeroIdle4"]
+atlas = ExtResource("1_idle")
+region = Rect2(192, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk1"]
+atlas = ExtResource("2_walk")
+region = Rect2(0, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk2"]
+atlas = ExtResource("2_walk")
+region = Rect2(64, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk3"]
+atlas = ExtResource("2_walk")
+region = Rect2(128, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk4"]
+atlas = ExtResource("2_walk")
+region = Rect2(192, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk5"]
+atlas = ExtResource("2_walk")
+region = Rect2(256, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk6"]
+atlas = ExtResource("2_walk")
+region = Rect2(320, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk7"]
+atlas = ExtResource("2_walk")
+region = Rect2(384, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk8"]
+atlas = ExtResource("2_walk")
+region = Rect2(448, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk9"]
+atlas = ExtResource("2_walk")
+region = Rect2(512, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroWalk10"]
+atlas = ExtResource("2_walk")
+region = Rect2(576, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack1"]
+atlas = ExtResource("3_attack")
+region = Rect2(0, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack2"]
+atlas = ExtResource("3_attack")
+region = Rect2(64, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack3"]
+atlas = ExtResource("3_attack")
+region = Rect2(128, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack4"]
+atlas = ExtResource("3_attack")
+region = Rect2(192, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack5"]
+atlas = ExtResource("3_attack")
+region = Rect2(256, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack6"]
+atlas = ExtResource("3_attack")
+region = Rect2(320, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack7"]
+atlas = ExtResource("3_attack")
+region = Rect2(384, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack8"]
+atlas = ExtResource("3_attack")
+region = Rect2(448, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack9"]
+atlas = ExtResource("3_attack")
+region = Rect2(512, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack10"]
+atlas = ExtResource("3_attack")
+region = Rect2(576, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack11"]
+atlas = ExtResource("3_attack")
+region = Rect2(640, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroAttack12"]
+atlas = ExtResource("3_attack")
+region = Rect2(704, 0, 64, 80)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt1"]
+atlas = ExtResource("4_hurt")
+region = Rect2(0, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt2"]
+atlas = ExtResource("4_hurt")
+region = Rect2(64, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt3"]
+atlas = ExtResource("4_hurt")
+region = Rect2(128, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt4"]
+atlas = ExtResource("4_hurt")
+region = Rect2(192, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt5"]
+atlas = ExtResource("4_hurt")
+region = Rect2(256, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt6"]
+atlas = ExtResource("4_hurt")
+region = Rect2(320, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt7"]
+atlas = ExtResource("4_hurt")
+region = Rect2(384, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt8"]
+atlas = ExtResource("4_hurt")
+region = Rect2(448, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt9"]
+atlas = ExtResource("4_hurt")
+region = Rect2(512, 0, 64, 64)
+
+
+[sub_resource type="AtlasTexture" id="HeroHurt10"]
+atlas = ExtResource("4_hurt")
+region = Rect2(576, 0, 64, 64)
+
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_idle")
+"texture": SubResource("HeroIdle1")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroIdle2")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroIdle3")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroIdle4")
 }],
 "loop": true,
 "name": &"idle",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_walk1")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_walk2")
-}],
-"loop": true,
-"name": &"walk",
 "speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_attack")
+"texture": SubResource("HeroWalk1")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk3")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk5")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk6")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk7")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk8")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk9")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroWalk10")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("HeroAttack1")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack2")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack3")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack4")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack5")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack6")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack7")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack8")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack9")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack10")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack11")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack12")
 }],
 "loop": false,
 "name": &"attack",
-"speed": 8.0
+"speed": 16.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_cast")
+"texture": SubResource("HeroAttack1")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack2")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack3")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack4")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack5")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack6")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack7")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack8")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack9")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack10")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack11")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroAttack12")
 }],
 "loop": false,
 "name": &"cast",
-"speed": 8.0
+"speed": 12.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_hurt")
+"texture": SubResource("HeroHurt1")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt2")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt3")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt4")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt5")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt6")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt7")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt8")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt9")
+}, {
+"duration": 1.0,
+"texture": SubResource("HeroHurt10")
 }],
 "loop": false,
 "name": &"hurt",
-"speed": 8.0
+"speed": 14.0
 }]

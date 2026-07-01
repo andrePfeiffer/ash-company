@@ -1,73 +1,308 @@
-[gd_resource type="SpriteFrames" load_steps=7 format=3]
+[gd_resource type="SpriteFrames" load_steps=26 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/stage_spritesheet.png" id="1_sheet"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/enemies/ashling/walk.png" id="1_walk"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/enemies/ashling/hurt.png" id="2_hurt"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_idle"]
-atlas = ExtResource("1_sheet")
-region = Rect2(0, 32, 32, 32)
+[sub_resource type="AtlasTexture" id="AshlingWalk1"]
+atlas = ExtResource("1_walk")
+region = Rect2(0, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_walk1"]
-atlas = ExtResource("1_sheet")
-region = Rect2(32, 32, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_walk2"]
-atlas = ExtResource("1_sheet")
-region = Rect2(64, 32, 32, 32)
+[sub_resource type="AtlasTexture" id="AshlingWalk2"]
+atlas = ExtResource("1_walk")
+region = Rect2(32, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_attack"]
-atlas = ExtResource("1_sheet")
-region = Rect2(96, 32, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_cast"]
-atlas = ExtResource("1_sheet")
-region = Rect2(128, 32, 32, 32)
+[sub_resource type="AtlasTexture" id="AshlingWalk3"]
+atlas = ExtResource("1_walk")
+region = Rect2(64, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_slime_hurt"]
-atlas = ExtResource("1_sheet")
-region = Rect2(160, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AshlingWalk4"]
+atlas = ExtResource("1_walk")
+region = Rect2(96, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk5"]
+atlas = ExtResource("1_walk")
+region = Rect2(128, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk6"]
+atlas = ExtResource("1_walk")
+region = Rect2(160, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk7"]
+atlas = ExtResource("1_walk")
+region = Rect2(192, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk8"]
+atlas = ExtResource("1_walk")
+region = Rect2(224, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk9"]
+atlas = ExtResource("1_walk")
+region = Rect2(256, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk10"]
+atlas = ExtResource("1_walk")
+region = Rect2(288, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk11"]
+atlas = ExtResource("1_walk")
+region = Rect2(320, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingWalk12"]
+atlas = ExtResource("1_walk")
+region = Rect2(352, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt1"]
+atlas = ExtResource("2_hurt")
+region = Rect2(0, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt2"]
+atlas = ExtResource("2_hurt")
+region = Rect2(32, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt3"]
+atlas = ExtResource("2_hurt")
+region = Rect2(64, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt4"]
+atlas = ExtResource("2_hurt")
+region = Rect2(96, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt5"]
+atlas = ExtResource("2_hurt")
+region = Rect2(128, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt6"]
+atlas = ExtResource("2_hurt")
+region = Rect2(160, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt7"]
+atlas = ExtResource("2_hurt")
+region = Rect2(192, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt8"]
+atlas = ExtResource("2_hurt")
+region = Rect2(224, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt9"]
+atlas = ExtResource("2_hurt")
+region = Rect2(256, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt10"]
+atlas = ExtResource("2_hurt")
+region = Rect2(288, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt11"]
+atlas = ExtResource("2_hurt")
+region = Rect2(320, 0, 32, 32)
+
+
+[sub_resource type="AtlasTexture" id="AshlingHurt12"]
+atlas = ExtResource("2_hurt")
+region = Rect2(352, 0, 32, 32)
+
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_idle")
+"texture": SubResource("AshlingWalk1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk4")
 }],
 "loop": true,
 "name": &"idle",
-"speed": 4.0
+"speed": 5.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_walk1")
+"texture": SubResource("AshlingWalk1")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_walk2")
+"texture": SubResource("AshlingWalk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk12")
 }],
 "loop": true,
 "name": &"walk",
-"speed": 6.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_attack")
+"texture": SubResource("AshlingWalk1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk12")
 }],
 "loop": false,
 "name": &"attack",
-"speed": 8.0
+"speed": 14.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_cast")
+"texture": SubResource("AshlingWalk1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingWalk12")
 }],
 "loop": false,
 "name": &"cast",
-"speed": 8.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_slime_hurt")
+"texture": SubResource("AshlingHurt1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AshlingHurt12")
 }],
 "loop": false,
 "name": &"hurt",
-"speed": 8.0
+"speed": 12.0
 }]

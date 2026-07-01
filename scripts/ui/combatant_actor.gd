@@ -24,8 +24,13 @@ const PARTY_ADVANCE_SPEED := 44.0
 const LEFT_ADVANCE_LIMIT := 210.0
 const ENEMY_SPAWN_X := -44.0
 
+const HERO_SPRITE_SCALE := Vector2(1.05, 1.05)
+const HERO_SPRITE_OFFSET := Vector2(0.0, -42.0)
+const ENEMY_SPRITE_SCALE := Vector2(1.6, 1.6)
+const ENEMY_SPRITE_OFFSET := Vector2(0.0, -25.0)
+
 const HERO_FRAMES: SpriteFrames = preload("res://resources/actor_sprite_frames.tres")
-const SLIME_FRAMES: SpriteFrames = preload("res://resources/slime_sprite_frames.tres")
+const ENEMY_FRAMES: SpriteFrames = preload("res://resources/slime_sprite_frames.tres")
 
 @onready var sprite: AnimatedSprite2D = %Sprite
 @onready var name_label: Label = %NameLabel
@@ -85,15 +90,49 @@ func update_from_combatant(combatant: Combatant) -> void:
 	hp_bar.value = combatant.hp
 
 	# Swap the visual resource instead of tinting every enemy into a hero shape.
-	# Heroes use the humanoid placeholder; enemies use a classic first-level slime.
-	var desired_frames: SpriteFrames = SLIME_FRAMES if combatant.is_enemy else HERO_FRAMES
+	# Heroes use the first editable vanguard export; enemies use the first ashling export.
+	var desired_frames: SpriteFrames = ENEMY_FRAMES if combatant.is_enemy else HERO_FRAMES
 	if sprite.sprite_frames != desired_frames:
 		sprite.sprite_frames = desired_frames
 		play_animation("idle")
 
+	configure_visual_layout(combatant.is_enemy)
+
 	# The party walks from right to left, so heroes face left and enemies face right.
 	sprite.flip_h = not combatant.is_enemy
 	sprite.modulate = color_for_visual_key(combatant.visual_key)
+
+
+func configure_visual_layout(next_is_enemy: bool) -> void:
+	if next_is_enemy:
+		sprite.scale = ENEMY_SPRITE_SCALE
+		sprite.position = ENEMY_SPRITE_OFFSET
+		set_nameplate_layout(-44.0, -70.0, 44.0, -50.0, -24.0, -47.0, 24.0, -41.0)
+		return
+
+	sprite.scale = HERO_SPRITE_SCALE
+	sprite.position = HERO_SPRITE_OFFSET
+	set_nameplate_layout(-44.0, -104.0, 44.0, -84.0, -26.0, -80.0, 26.0, -74.0)
+
+
+func set_nameplate_layout(
+	label_left: float,
+	label_top: float,
+	label_right: float,
+	label_bottom: float,
+	bar_left: float,
+	bar_top: float,
+	bar_right: float,
+	bar_bottom: float
+) -> void:
+	name_label.offset_left = label_left
+	name_label.offset_top = label_top
+	name_label.offset_right = label_right
+	name_label.offset_bottom = label_bottom
+	hp_bar.offset_left = bar_left
+	hp_bar.offset_top = bar_top
+	hp_bar.offset_right = bar_right
+	hp_bar.offset_bottom = bar_bottom
 
 
 func set_home_position(next_home_position: Vector2) -> void:
@@ -196,12 +235,14 @@ func play_death_and_free() -> void:
 
 
 func get_hit_global_position() -> Vector2:
-	return global_position + Vector2(0, -28)
+	var y_offset := -30.0 if is_enemy else -58.0
+	return global_position + Vector2(0, y_offset)
 
 
 func get_projectile_spawn_global_position() -> Vector2:
-	var x_offset := 16.0 if is_enemy else -16.0
-	return global_position + Vector2(x_offset, -20)
+	var x_offset := 18.0 if is_enemy else -24.0
+	var y_offset := -24.0 if is_enemy else -52.0
+	return global_position + Vector2(x_offset, y_offset)
 
 
 func process_idle(delta: float) -> void:
@@ -337,16 +378,16 @@ func play_animation(animation_name: String) -> void:
 func color_for_visual_key(visual_key: String) -> Color:
 	match visual_key:
 		"vanguard":
-			return Color(0.45, 0.75, 1.0, 1.0)
+			return Color(0.78, 0.9, 1.0, 1.0)
 		"striker":
-			return Color(1.0, 0.82, 0.35, 1.0)
+			return Color(1.0, 0.92, 0.68, 1.0)
 		"mender":
-			return Color(0.45, 1.0, 0.55, 1.0)
+			return Color(0.78, 1.0, 0.82, 1.0)
 		"arcanist":
-			return Color(0.78, 0.55, 1.0, 1.0)
+			return Color(0.9, 0.78, 1.0, 1.0)
 		"slime":
-			return Color(1.0, 1.0, 1.0, 1.0)
+			return Color(0.82, 0.82, 0.82, 1.0)
 		"ashling":
-			return Color(1.0, 0.35, 0.3, 1.0)
+			return Color(0.82, 0.78, 0.72, 1.0)
 		_:
 			return Color.WHITE

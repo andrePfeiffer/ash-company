@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/combat_stage.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/art/exported/environment/forest-stage/background.png" id="2_background"]
 
 [node name="CombatStage" type="Control"]
 unique_name_in_owner = true
@@ -12,6 +13,18 @@ grow_horizontal = 2
 grow_vertical = 2
 clip_contents = true
 script = ExtResource("1_script")
+
+[node name="Background" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_background")
+stretch_mode = 6
 
 [node name="ActorsLayer" type="Node2D" parent="."]
 unique_name_in_owner = true

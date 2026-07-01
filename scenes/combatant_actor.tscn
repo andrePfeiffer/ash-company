@@ -8,25 +8,26 @@ script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 unique_name_in_owner = true
+position = Vector2(0, -42)
 sprite_frames = ExtResource("2_frames")
 animation = &"idle"
 centered = true
-scale = Vector2(1.45, 1.45)
+scale = Vector2(1.05, 1.05)
 
 [node name="NameLabel" type="Label" parent="."]
 unique_name_in_owner = true
-offset_left = -40.0
-offset_top = -48.0
-offset_right = 40.0
-offset_bottom = -28.0
+offset_left = -44.0
+offset_top = -104.0
+offset_right = 44.0
+offset_bottom = -84.0
 text = "Actor"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HpBar" type="ProgressBar" parent="."]
 unique_name_in_owner = true
-offset_left = -24.0
-offset_top = -25.0
-offset_right = 24.0
-offset_bottom = -19.0
+offset_left = -26.0
+offset_top = -80.0
+offset_right = 26.0
+offset_bottom = -74.0
 show_percentage = false
