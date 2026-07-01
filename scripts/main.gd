@@ -1,19 +1,18 @@
 extends Control
 
-# Main.gd now focuses on window behavior and UI updates.
+# Main.gd focuses on window behavior and UI updates.
 # Combat rules and combatant data live in scripts/combat/.
-# Card layout lives in scenes/combatant_card.tscn.
+# CombatStage owns the animated 2D presentation of the fight lane.
 # Later we can split window behavior into its own script too.
 
 const COMBAT_SYSTEM_SCRIPT := preload("res://scripts/combat/combat_system.gd")
-const COMBATANT_CARD_SCENE := preload("res://scenes/combatant_card.tscn")
 
 const INITIAL_WINDOW_SIZE := Vector2i(960, 300)
 const EXPANDED_WINDOW_SIZE := Vector2i(960, 520)
 const CONTENT_WIDTH := 944.0
 const WINDOW_MARGIN := 8.0
-const BATTLEFIELD_HEIGHT := 90.0
-const BACKGROUND_TEST_GAP_HEIGHT := 40.0
+const STAGE_HEIGHT := 132.0
+const BACKGROUND_TEST_GAP_HEIGHT := 20.0
 const LOG_COLLAPSED_HEIGHT := 92.0
 const LOG_EXPANDED_HEIGHT := 300.0
 const MAX_LOG_LINES := 80
@@ -26,10 +25,9 @@ var combat_system: CombatSystem
 @onready var content_layer: Control = %ContentLayer
 @onready var root_box: VBoxContainer = %RootBox
 @onready var top_panel: PanelContainer = %TopPanel
-@onready var battlefield_panel: PanelContainer = %BattlefieldPanel
+@onready var stage_panel: PanelContainer = %StagePanel
+@onready var combat_stage: CombatStage = %CombatStage
 @onready var background_test_gap: Control = %BackgroundTestGap
-@onready var party_box: HBoxContainer = %PartyBox
-@onready var enemy_box: HBoxContainer = %EnemyBox
 @onready var log_panel: PanelContainer = %LogPanel
 @onready var log_label: RichTextLabel = %LogLabel
 @onready var status_label: Label = %StatusLabel
@@ -55,8 +53,10 @@ func _ready() -> void:
 	# This also updates the mouse passthrough region.
 	get_viewport().size_changed.connect(update_layout_bounds)
 
-	start_new_run()
+	# Build the window bounds before starting the run so the stage has a real size.
+	# The deferred start gives Godot one frame to apply container layout.
 	update_layout_bounds()
+	call_deferred("start_new_run")
 
 
 func _input(event: InputEvent) -> void:
@@ -77,8 +77,9 @@ func _process(delta: float) -> void:
 		return
 
 	# CombatSystem returns true only when something changed.
-	# That keeps Main.gd from rebuilding the UI more often than needed.
 	if combat_system.tick(delta):
+		var visual_events: Array[Dictionary] = combat_system.consume_visual_events()
+		combat_stage.play_events(visual_events)
 		update_ui()
 
 
@@ -109,11 +110,11 @@ func configure_scene_ui() -> void:
 	root_box.custom_minimum_size = Vector2(CONTENT_WIDTH, 0)
 
 	top_panel.add_theme_stylebox_override("panel", make_panel_style(0.78))
-	battlefield_panel.add_theme_stylebox_override("panel", make_panel_style(0.72))
+	stage_panel.add_theme_stylebox_override("panel", make_panel_style(0.50))
 	log_panel.add_theme_stylebox_override("panel", make_panel_style(0.82))
 
-	battlefield_panel.custom_minimum_size = Vector2(0, BATTLEFIELD_HEIGHT)
-	battlefield_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stage_panel.custom_minimum_size = Vector2(0, STAGE_HEIGHT)
+	stage_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	background_test_gap.custom_minimum_size = Vector2(0, BACKGROUND_TEST_GAP_HEIGHT)
 	background_test_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -184,19 +185,16 @@ func update_layout_bounds() -> void:
 
 
 func update_mouse_passthrough_polygon() -> void:
-	if top_panel == null or battlefield_panel == null or log_panel == null:
+	if top_panel == null or stage_panel == null or log_panel == null:
 		return
 
 	# Godot can pass mouse events outside this polygon to the windows behind it.
-	# Instead of using one big rectangle, we trace the top bar, the combat panel,
-	# and the log panel with a tiny left-side bridge between them.
-	# That leaves most of the transparent gap between combat and log clickable.
 	var top_rect := Rect2(top_panel.global_position, top_panel.size).grow(2.0)
-	var battle_rect := Rect2(battlefield_panel.global_position, battlefield_panel.size).grow(2.0)
+	var stage_rect := Rect2(stage_panel.global_position, stage_panel.size).grow(2.0)
 	var log_rect := Rect2(log_panel.global_position, log_panel.size).grow(2.0)
 
-	var x0 := minf(top_rect.position.x, minf(battle_rect.position.x, log_rect.position.x))
-	var x1 := maxf(top_rect.end.x, maxf(battle_rect.end.x, log_rect.end.x))
+	var x0 := minf(top_rect.position.x, minf(stage_rect.position.x, log_rect.position.x))
+	var x1 := maxf(top_rect.end.x, maxf(stage_rect.end.x, log_rect.end.x))
 	var bridge_x := x0 + 6.0
 
 	get_window().mouse_passthrough_polygon = PackedVector2Array([
@@ -204,10 +202,10 @@ func update_mouse_passthrough_polygon() -> void:
 		Vector2(x1, top_rect.position.y),
 		Vector2(x1, top_rect.end.y),
 		Vector2(bridge_x, top_rect.end.y),
-		Vector2(bridge_x, battle_rect.position.y),
-		Vector2(x1, battle_rect.position.y),
-		Vector2(x1, battle_rect.end.y),
-		Vector2(bridge_x, battle_rect.end.y),
+		Vector2(bridge_x, stage_rect.position.y),
+		Vector2(x1, stage_rect.position.y),
+		Vector2(x1, stage_rect.end.y),
+		Vector2(bridge_x, stage_rect.end.y),
 		Vector2(bridge_x, log_rect.position.y),
 		Vector2(x1, log_rect.position.y),
 		Vector2(x1, log_rect.end.y),
@@ -231,6 +229,7 @@ func make_panel_style(alpha: float) -> StyleBoxFlat:
 
 
 func start_new_run() -> void:
+	combat_stage.clear_stage()
 	combat_system.start_new_run()
 	update_ui()
 
@@ -245,25 +244,5 @@ func update_ui() -> void:
 		combat_system.get_alive(combat_system.enemies).size(),
 	]
 
-	rebuild_combatant_cards(party_box, combat_system.party)
-	rebuild_combatant_cards(enemy_box, combat_system.enemies)
+	combat_stage.sync_combatants(combat_system.party, combat_system.enemies)
 	log_label.text = "\n".join(combat_system.log_entries)
-
-
-func rebuild_combatant_cards(container: HBoxContainer, combatants: Array[Combatant]) -> void:
-	# We still rebuild the cards every state update for simplicity, but each card layout
-	# now lives in its own scene. The next optimization will be to keep cards alive
-	# and only update their data when combat state changes.
-	for child in container.get_children():
-		child.queue_free()
-
-	for combatant in combatants:
-		var card := COMBATANT_CARD_SCENE.instantiate()
-		container.add_child(card)
-		card.update_from_combatant(
-			combatant.display_name,
-			combatant.role,
-			combatant.hp,
-			combatant.max_hp,
-			combatant.is_alive()
-		)

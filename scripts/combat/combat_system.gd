@@ -3,17 +3,25 @@ class_name CombatSystem
 
 const CombatantScript := preload("res://scripts/combat/combatant.gd")
 
-# CombatSystem owns the current run state: party, enemies, wave, and combat log.
-# It does not know anything about UI nodes. Main.gd asks this object for data
-# and decides how that data should be displayed.
+# CombatSystem owns the current run state: party, enemies, wave, combat log,
+# and combat events. It does not know anything about nodes or animation.
+# Main.gd and CombatStage.gd decide how to display this data.
+
+const MELEE_RANGE := 34.0
+const MENDER_RANGE := 150.0
+const ARCANIST_RANGE := 235.0
+const WAVE_TRANSITION_DELAY := 1.15
 
 var party: Array[Combatant] = []
 var enemies: Array[Combatant] = []
 var wave: int = 1
 var combat_started: bool = false
 var log_entries: Array[String] = []
+var visual_events: Array[Dictionary] = []
+var wave_transition_timer := 0.0
 
 var max_log_lines: int = 80
+var next_combatant_id: int = 1
 
 
 func _init(_max_log_lines: int = 80) -> void:
@@ -22,20 +30,55 @@ func _init(_max_log_lines: int = 80) -> void:
 
 func start_new_run() -> void:
 	wave = 1
+	next_combatant_id = 1
 	log_entries.clear()
+	visual_events.clear()
+	wave_transition_timer = 0.0
 
 	# Four fixed archetypes for the first MVP.
-	# Builds/items will make them flexible later, but the base roles stay readable.
+	# attack_style and attack_range are visual/combat intent. The 2D stage decides
+	# how to move actors until they are close enough to perform their action.
 	party = [
-		CombatantScript.new("Vanguard", "Tank", 120, 9, 5, 0, 1.4),
-		CombatantScript.new("Striker", "DPS", 75, 17, 1, 0, 1.0),
-		CombatantScript.new("Mender", "Healer", 70, 7, 1, 15, 1.7),
-		CombatantScript.new("Arcanist", "Mage", 62, 20, 0, 0, 1.8),
+		create_combatant("Vanguard", "Tank", 120, 9, 5, 0, 1.4, false, "vanguard", "melee", MELEE_RANGE),
+		create_combatant("Striker", "DPS", 75, 17, 1, 0, 1.0, false, "striker", "melee", MELEE_RANGE),
+		create_combatant("Mender", "Healer", 70, 7, 1, 15, 1.7, false, "mender", "ranged", MENDER_RANGE),
+		create_combatant("Arcanist", "Mage", 62, 20, 0, 0, 1.8, false, "arcanist", "ranged", ARCANIST_RANGE),
 	]
 
 	spawn_wave(wave)
 	combat_started = true
 	push_log("The Ash Company enters the first ruin.")
+
+
+func create_combatant(
+	display_name: String,
+	role: String,
+	max_hp: int,
+	attack: int,
+	defense: int,
+	heal_power: int,
+	speed: float,
+	is_enemy: bool,
+	visual_key: String,
+	attack_style: String,
+	attack_range: float
+) -> Combatant:
+	var combatant: Combatant = CombatantScript.new(
+		display_name,
+		role,
+		max_hp,
+		attack,
+		defense,
+		heal_power,
+		speed,
+		is_enemy,
+		visual_key,
+		attack_style,
+		attack_range
+	)
+	combatant.combatant_id = next_combatant_id
+	next_combatant_id += 1
+	return combatant
 
 
 func tick(delta: float) -> bool:
@@ -49,11 +92,22 @@ func tick(delta: float) -> bool:
 		push_log("The Ash Company fell on wave %s." % wave)
 		return true
 
-	# Wave clear: all enemies are dead, then the next wave starts immediately.
+	# After a wave is cleared, the party keeps walking for a short moment before
+	# the next blocking group enters from the left. This makes the stage feel like
+	# a lane instead of teleporting enemies onto the party.
+	if wave_transition_timer > 0.0:
+		wave_transition_timer = maxf(0.0, wave_transition_timer - delta)
+		if wave_transition_timer <= 0.0:
+			wave += 1
+			spawn_wave(wave)
+			push_log("Wave %s blocks the road." % wave)
+		return true
+
+	# Wave clear: enemies are gone, then the party gets a short walking window
+	# before the next wave appears from off-screen.
 	if get_alive(enemies).is_empty():
-		wave += 1
-		spawn_wave(wave)
-		push_log("Wave %s approaches." % wave)
+		wave_transition_timer = WAVE_TRANSITION_DELAY
+		push_log("The Ash Company pushes forward.")
 		return true
 
 	var changed := false
@@ -78,7 +132,7 @@ func tick(delta: float) -> bool:
 
 
 func spawn_wave(current_wave: int) -> void:
-	# Enemy count slowly increases, but is capped so the UI stays readable.
+	# Enemy count slowly increases, but is capped so the window stays readable.
 	var enemy_count := mini(2 + int(current_wave / 2), 5)
 	enemies.clear()
 
@@ -87,7 +141,19 @@ func spawn_wave(current_wave: int) -> void:
 		var atk := 5 + current_wave * 2
 		var def := int(current_wave / 3)
 		var speed := maxf(0.8, 1.8 - current_wave * 0.03)
-		enemies.append(CombatantScript.new("Ashling %s" % (index + 1), "Enemy", hp, atk, def, 0, speed, true))
+		enemies.append(create_combatant(
+			"Ash Slime %s" % (index + 1),
+			"Enemy",
+			hp,
+			atk,
+			def,
+			0,
+			speed,
+			true,
+			"slime",
+			"melee",
+			MELEE_RANGE
+		))
 
 
 func party_action(hero: Combatant) -> void:
@@ -99,10 +165,9 @@ func party_action(hero: Combatant) -> void:
 			var amount := hero.heal_power + randi_range(0, 4)
 			wounded.heal(amount)
 			push_log("Mender heals %s for %s." % [wounded.display_name, amount])
+			push_visual_event("heal", hero, wounded, amount)
 			return
 
-	# Everyone else attacks the first living enemy.
-	# Later we can add targeting rules such as lowest HP, highest threat, marked target, etc.
 	var target := get_first_alive(enemies)
 	if target == null:
 		return
@@ -110,6 +175,7 @@ func party_action(hero: Combatant) -> void:
 	var damage := calculate_damage(hero.attack, target.defense)
 	target.receive_damage(damage)
 	push_log("%s hits %s for %s." % [hero.display_name, target.display_name, damage])
+	push_visual_event("attack", hero, target, damage)
 
 	if not target.is_alive():
 		push_log("%s is defeated." % target.display_name)
@@ -123,6 +189,7 @@ func enemy_action(enemy: Combatant) -> void:
 	var damage := calculate_damage(enemy.attack, target.defense)
 	target.receive_damage(damage)
 	push_log("%s strikes %s for %s." % [enemy.display_name, target.display_name, damage])
+	push_visual_event("attack", enemy, target, damage)
 
 	if not target.is_alive():
 		push_log("%s has fallen." % target.display_name)
@@ -177,3 +244,24 @@ func push_log(message: String) -> void:
 	log_entries.push_back(message)
 	if log_entries.size() > max_log_lines:
 		log_entries.pop_front()
+
+
+func push_visual_event(event_type: String, actor: Combatant, target: Combatant, amount: int) -> void:
+	# Visual events are intentionally data-only so CombatSystem stays UI-free.
+	# amount is used only for visual feedback; damage/healing has already been
+	# applied to the combat data before this event is consumed by CombatStage.
+	visual_events.append({
+		"type": event_type,
+		"actor_id": actor.combatant_id,
+		"target_id": target.combatant_id,
+		"attack_style": actor.attack_style,
+		"attack_range": actor.attack_range,
+		"amount": amount,
+		"target_died": not target.is_alive(),
+	})
+
+
+func consume_visual_events() -> Array[Dictionary]:
+	var events := visual_events.duplicate()
+	visual_events.clear()
+	return events

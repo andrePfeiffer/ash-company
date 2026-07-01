@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/combatant_actor.gd" id="1_script"]
+[ext_resource type="SpriteFrames" path="res://resources/actor_sprite_frames.tres" id="2_frames"]
+
+[node name="CombatantActor" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+unique_name_in_owner = true
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+centered = true
+scale = Vector2(1.45, 1.45)
+
+[node name="NameLabel" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = -40.0
+offset_top = -48.0
+offset_right = 40.0
+offset_bottom = -28.0
+text = "Actor"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HpBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+offset_left = -24.0
+offset_top = -25.0
+offset_right = 24.0
+offset_bottom = -19.0
+show_percentage = false

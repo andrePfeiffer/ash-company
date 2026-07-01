@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://7eabvb6dgx0w"]
+[gd_scene load_steps=3 format=3 uid="uid://7eabvb6dgx0w"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main_script"]
+[ext_resource type="PackedScene" path="res://scenes/combat_stage.tscn" id="2_combat_stage"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -68,38 +69,21 @@ layout_mode = 2
 text = "X"
 tooltip_text = "Close Ash Company"
 
-[node name="BattlefieldPanel" type="PanelContainer" parent="ContentLayer/RootBox"]
+[node name="StagePanel" type="PanelContainer" parent="ContentLayer/RootBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 90)
+custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="Battlefield" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel"]
+[node name="CombatStage" parent="ContentLayer/RootBox/StagePanel" instance=ExtResource("2_combat_stage")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 10
-
-[node name="PartyBox" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="Divider" type="VSeparator" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="EnemyBox" type="HBoxContainer" parent="ContentLayer/RootBox/BattlefieldPanel/Battlefield"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
 
 [node name="BackgroundTestGap" type="Control" parent="ContentLayer/RootBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 mouse_filter = 2
 
@@ -115,4 +99,5 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
+scroll_active = true
 scroll_following = true

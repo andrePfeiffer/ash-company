@@ -2,11 +2,18 @@ extends RefCounted
 class_name Combatant
 
 # Combatant is a small data object used by the combat system.
-# It does not know anything about UI, scenes, cards, or windows.
+# It does not know anything about UI scenes, windows, or animations.
+# Visual fields describe intent; the stage decides how to animate them.
+
+# Stable runtime id used by the visual stage to match data objects to actors.
+var combatant_id: int = 0
 
 # Display data.
 var display_name: String
 var role: String
+var visual_key: String
+var attack_style: String
+var attack_range: float
 
 # Combat stats.
 var max_hp: int
@@ -29,7 +36,10 @@ func _init(
 	_defense: int,
 	_heal_power: int,
 	_speed: float,
-	_is_enemy: bool = false
+	_is_enemy: bool = false,
+	_visual_key: String = "",
+	_attack_style: String = "melee",
+	_attack_range: float = 34.0
 ) -> void:
 	display_name = _display_name
 	role = _role
@@ -40,6 +50,9 @@ func _init(
 	heal_power = _heal_power
 	speed = _speed
 	is_enemy = _is_enemy
+	visual_key = _visual_key
+	attack_style = _attack_style
+	attack_range = _attack_range
 
 
 func is_alive() -> bool:

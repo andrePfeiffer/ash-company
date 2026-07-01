@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/projectile.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/stage_spritesheet.png" id="2_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_projectile"]
+atlas = ExtResource("2_sheet")
+region = Rect2(192, 0, 16, 16)
+
+[node name="Projectile" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+texture = SubResource("AtlasTexture_projectile")
+centered = true
+scale = Vector2(1.25, 1.25)
